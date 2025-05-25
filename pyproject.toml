@@ -4,12 +4,24 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "astmonkey>=0.3.6",
+    "astor>=0.8.1",
+    "astpretty>=3.0.0",
+    "pytest>=8.3.5",
+]
 
 [dependency-groups]
 dev = [
     "pytest>=8.3.5",
 ]
 
+# pyproject.toml
 [tool.pytest.ini_options]
-pythonpath = "src"
+pythonpath = '.'
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+    "integration",
+]
