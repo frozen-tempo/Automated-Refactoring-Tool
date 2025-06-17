@@ -1,3 +1,5 @@
-def list_comprehension_with_condition(numbers):
-    """Expected complexity: 2 (1 if in comprehension = 1 decision point + 1)"""
-    return [x for x in numbers if x > 0]
+def simple_function():
+    x = 1
+    y = 2
+    if x == 1:
+        return x + y

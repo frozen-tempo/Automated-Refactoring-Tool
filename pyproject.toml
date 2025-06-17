@@ -9,11 +9,13 @@ dependencies = [
     "astor>=0.8.1",
     "astpretty>=3.0.0",
     "pytest>=8.3.5",
+    "radon>=2.0.0"
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=8.3.5",
+    "radon>=2.0.0"
 ]
 
 # pyproject.toml

@@ -1,5 +1,4 @@
 import ast
-
 class CodeMetricsVisitor(ast.NodeVisitor):
     
     def __init__(self):
