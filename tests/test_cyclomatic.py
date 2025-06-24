@@ -1,87 +1,335 @@
 import ast
-from src.code_metrics.code_metrics import CodeMetricsVisitor
-import radon
+from src.code_metrics.cyclomatic import CyclomaticComplexityVisitor
+import pytest
+from textwrap import dedent
 
-def test_simple_function():
+simple_code_blocks = [
+    (
+        '''
+     if a: pass
+     ''',
+        2,
+        {},
+    ),
+    (
+        '''
+     if a: pass
+     else: pass
+     ''',
+        2,
+        {},
+    ),
+    (
+        '''
+     if a: pass
+     elif b: pass
+     ''',
+        3,
+        {},
+    ),
+    (
+        '''
+     if a: pass
+     elif b: pass
+     else: pass
+     ''',
+        3,
+        {},
+    ),
+    (
+        '''
+    if a and b: pass
+    ''',
+        3,
+        {},
+    ),
+    (
+        '''
+    if a and b: pass
+    else: pass
+    ''',
+        3,
+        {},
+    ),
+    (
+        '''
+     if a and b: pass
+     elif c and d: pass
+     else: pass
+     ''',
+        5,
+        {},
+    ),
+    (
+        '''
+     if a and b or c and d: pass
+     else: pass
+     ''',
+        5,
+        {},
+    ),
+    (
+        '''
+     if a and b or c: pass
+     else: pass
+     ''',
+        4,
+        {},
+    ),
+    (
+        '''
+     for x in range(10): print(x)
+     ''',
+        2,
+        {},
+    ),
+    (
+        '''
+     for x in xrange(10): print(x)
+     else: pass
+     ''',
+        3,
+        {},
+    ),
+    (
+        '''
+     while a < 4: pass
+     ''',
+        2,
+        {},
+    ),
+    (
+        '''
+     while a < 4: pass
+     else: pass
+     ''',
+        3,
+        {},
+    ),
+    (
+        '''
+     while a < 4 and b < 42: pass
+     ''',
+        3,
+        {},
+    ),
+    (
+        '''
+     while a and b or c < 10: pass
+     else: pass
+     ''',
+        5,
+        {},
+    ),
+    # With and async-with statements no longer count towards CC, see #123
+    (
+        '''
+     with open('raw.py') as fobj: print(fobj.read())
+     ''',
+        1,
+        {},
+    ),
+    (
+        '''
+     [i for i in range(4)]
+     ''',
+        2,
+        {},
+    ),
+    (
+        '''
+     [i for i in range(4) if i&1]
+     ''',
+        3,
+        {},
+    ),
+    (
+        '''
+     (i for i in range(4))
+     ''',
+        2,
+        {},
+    ),
+    (
+        '''
+     (i for i in range(4) if i&1)
+     ''',
+        3,
+        {},
+    ),
+    (
+        '''
+     [i for i in range(42) if sum(k ** 2 for k in divisors(i)) & 1]
+     ''',
+        4,
+        {},
+    ),
+    (
+        '''
+     try: raise TypeError
+     except TypeError: pass
+     ''',
+        2,
+        {},
+    ),
+    (
+        '''
+     try: raise TypeError
+     except TypeError: pass
+     else: pass
+     ''',
+        3,
+        {},
+    ),
+    (
+        '''
+     try: raise TypeError
+     finally: pass
+     ''',
+        1,
+        {},
+    ),
+    (
+        '''
+     try: raise TypeError
+     except TypeError: pass
+     finally: pass
+     ''',
+        2,
+        {},
+    ),
+    (
+        '''
+     try: raise TypeError
+     except TypeError: pass
+     else: pass
+     finally: pass
+     ''',
+        3,
+        {},
+    ),
+    (
+        '''
+     try: raise TypeError
+     except TypeError: pass
+     else:
+        pass
+        pass
+     finally: pass
+     ''',
+        3,
+        {},
+    ),
+    # Lambda are not counted anymore as per #68
+    (
+        '''
+     k = lambda a, b: k(b, a)
+     ''',
+        1,
+        {},
+    ),
+    (
+        '''
+     k = lambda a, b, c: c if a else b
+     ''',
+        2,
+        {},
+    ),
+    (
+        '''
+     v = a if b else c
+     ''',
+        2,
+        {},
+    ),
+    (
+        '''
+     v = a if sum(i for i in xrange(c)) < 10 else c
+     ''',
+        3,
+        {},
+    ),
+    (
+        '''
+     sum(i for i in range(12) for z in range(i ** 2) if i * z & 1)
+     ''',
+        4,
+        {},
+    ),
+    (
+        '''
+     sum(i for i in range(10) if i >= 2 and val and val2 or val3)
+     ''',
+        6,
+        {},
+    ),
+    (
+        '''
+     for i in range(10):
+         print(i)
+     else:
+         print('wah')
+         print('really not found')
+         print(3)
+     ''',
+        3,
+        {},
+    ),
+    (
+        '''
+     while True:
+         print(1)
+     else:
+         print(2)
+         print(1)
+         print(0)
+         print(-1)
+     ''',
+        3,
+        {},
+    ),
+    (
+        '''
+     assert i < 0
+     ''',
+        2,
+        {},
+    ),
+    (
+        '''
+     assert i < 0, "Fail"
+     ''',
+        2,
+        {},
+    ),
+    (
+        '''
+     assert i < 0
+     ''',
+        1,
+        {'no_assert': True},
+    ),
+    (
+        '''
+     def f():
+        assert 10 > 20
+     ''',
+        1,
+        {'no_assert': True},
+    ),
+    (
+        '''
+     class TestYo(object):
+        def test_yo(self):
+            assert self.n > 4
+     ''',
+        1,
+        {'no_assert': True},
+    ),
+]
 
-    source_code = "def my_func(): x = 1; return x;"
-    code_metrics = CodeMetricsVisitor()
-    code_metrics.visit(ast.parse(source_code))
-    assert code_metrics.cyclomatic_complexity == radon.complexity.cc.visit(ast.parse(source_code))
-
-def test_if_statement():
-
-    source_code = "def function_with_if(a):\n    if a > 10:\n        print('Greater than 10')"
-    code_metrics = CodeMetricsVisitor()
-    code_metrics.visit(ast.parse(source_code))
-    assert code_metrics.cyclomatic_complexity == 2
-
-def test_if_elif_else_statement():
-
-    source_code = "def f(a):\n    if a > 10:\n        print('High')\n    elif a > 5:\n        print('Medium')\n    else:\n        print('Low')"
-    code_metrics = CodeMetricsVisitor()
-    code_metrics.visit(ast.parse(source_code))
-    assert code_metrics.cyclomatic_complexity == 3
-
-def test_for_loop():
-
-    source_code = "def function_with_if(a):\n    if a > 10:\n        print('Greater than 10')"
-    code_metrics = CodeMetricsVisitor()
-    code_metrics.visit(ast.parse(source_code))
-    assert code_metrics.cyclomatic_complexity == 2
-
-def test_while_loop():
-
-    source_code = "def function_with_if(a):\n    if a > 10:\n        print('Greater than 10')"
-    code_metrics = CodeMetricsVisitor()
-    code_metrics.visit(ast.parse(source_code))
-    assert code_metrics.cyclomatic_complexity == 2
-
-def test_try_except():
-
-    source_code = "def function_with_if(a):\n    if a > 10:\n        print('Greater than 10')"
-    code_metrics = CodeMetricsVisitor()
-    code_metrics.visit(ast.parse(source_code))
-    assert code_metrics.cyclomatic_complexity == 2
-
-def test_bool_op():
-
-    source_code = "def function_with_if(a):\n    if a > 10:\n        print('Greater than 10')"
-    code_metrics = CodeMetricsVisitor()
-    code_metrics.visit(ast.parse(source_code))
-    assert code_metrics.cyclomatic_complexity == 2
-
-def test_list_comprehension():
-
-    source_code = "def function_with_if(a):\n    if a > 10:\n        print('Greater than 10')"
-    code_metrics = CodeMetricsVisitor()
-    code_metrics.visit(ast.parse(source_code))
-    assert code_metrics.cyclomatic_complexity == 2
-
-def test_with_statement():
-
-    source_code = "def function_with_if(a):\n    if a > 10:\n        print('Greater than 10')"
-    code_metrics = CodeMetricsVisitor()
-    code_metrics.visit(ast.parse(source_code))
-    assert code_metrics.cyclomatic_complexity == 2
-
-def test_assert_statement():
-
-    source_code = "def function_with_if(a):\n    if a > 10:\n        print('Greater than 10')"
-    code_metrics = CodeMetricsVisitor()
-    code_metrics.visit(ast.parse(source_code))
-    assert code_metrics.cyclomatic_complexity == 2
-
-def test_ternary():
-
-    source_code = "def function_with_if(a):\n    if a > 10:\n        print('Greater than 10')"
-    code_metrics = CodeMetricsVisitor()
-    code_metrics.visit(ast.parse(source_code))
-    assert code_metrics.cyclomatic_complexity == 2
-
-def test_complex_function():
-
-    source_code = "def function_with_if(a):\n    if a > 10:\n        print('Greater than 10')"
-    code_metrics = CodeMetricsVisitor()
-    code_metrics.visit(ast.parse(source_code))
-    assert code_metrics.cyclomatic_complexity == 2
+@pytest.mark.parametrize("code,expected, kwargs", simple_code_blocks)
+def test_code_blocks(code, expected,kwargs):
+    complexity = CyclomaticComplexityVisitor()
+    complexity.visit(ast.parse(dedent(code).strip()))
+    assert complexity. == expected
