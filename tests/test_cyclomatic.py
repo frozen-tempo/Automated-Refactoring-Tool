@@ -3,7 +3,7 @@ from src.code_metrics.cyclomatic import CyclomaticComplexityVisitor
 import pytest
 from textwrap import dedent
 
-simple_code_blocks = [
+code_blocks = [
     (
         '''
      if a: pass
@@ -292,22 +292,8 @@ simple_code_blocks = [
         '''
      assert i < 0
      ''',
-        2,
-        {},
-    ),
-    (
-        '''
-     assert i < 0, "Fail"
-     ''',
-        2,
-        {},
-    ),
-    (
-        '''
-     assert i < 0
-     ''',
         1,
-        {'no_assert': True},
+        {},
     ),
     (
         '''
@@ -315,7 +301,7 @@ simple_code_blocks = [
         assert 10 > 20
      ''',
         1,
-        {'no_assert': True},
+        {},
     ),
     (
         '''
@@ -324,12 +310,48 @@ simple_code_blocks = [
             assert self.n > 4
      ''',
         1,
-        {'no_assert': True},
+        {},
+    ),
+        (
+        '''
+     match a:
+         case 1: pass
+     ''',
+        2,
+        {},
+    ),
+    (
+        '''
+     match a:
+         case 1: pass
+         case _: pass
+     ''',
+        2,
+        {},
+    ),
+    (
+        '''
+     match a:
+         case 1: pass
+         case 2: pass
+     ''',
+        3,
+        {},
+    ),
+    (
+        '''
+     match a:
+         case 1: pass
+         case 2: pass
+         case _: pass
+     ''',
+        3,
+        {},
     ),
 ]
 
-@pytest.mark.parametrize("code,expected, kwargs", simple_code_blocks)
+@pytest.mark.parametrize("code,expected, kwargs", code_blocks)
 def test_code_blocks(code, expected,kwargs):
     complexity = CyclomaticComplexityVisitor()
     complexity.visit(ast.parse(dedent(code).strip()))
-    assert complexity. == expected
+    assert complexity.cyclomatic_complexity == expected

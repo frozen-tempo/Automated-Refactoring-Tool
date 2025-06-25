@@ -18,11 +18,7 @@ class Function:
             return f"{self.belongs_to}.{self.name}"
         
     def __str__(self):
-        return f"Class: {self.name} \n 
-                Start Line: {self.start_lineno} \n 
-                End Line: {self.end_lineno} \n 
-                Belongs to: {self.belongs_to} \n 
-                Complexity: {self.complexity}"
+        return f"Class: {self.name} \n Start Line: {self.start_lineno} \n End Line: {self.end_lineno} \n Belongs to: {self.belongs_to} \n Complexity: {self.complexity}"
         
 class Class:
 
@@ -34,11 +30,7 @@ class Class:
         self.complexity = complexity
 
     def __str__(self):
-        return f"Class: {self.name} \n 
-                Start Line: {self.start_lineno} \n 
-                End Line: {self.end_lineno} \n 
-                Methods: {self.methods} \n 
-                Complexity: {self.complexity}"
+        return f"Class: {self.name} \n Start Line: {self.start_lineno} \n End Line: {self.end_lineno} \n Methods: {self.methods} \n Complexity: {self.complexity}"
     
 class CodeMetricsVisitor(ast.NodeVisitor):
 
@@ -67,13 +59,13 @@ class CyclomaticComplexityVisitor(CodeMetricsVisitor):
     
     def total_complexity(self):
         return (
-            self.complexity 
+            self.cyclomatic_complexity 
             + self.function_complexity() 
             + self.class_complexity() 
             + 1
         )
 
-    def generic_visit(self, node: ast.AST):
+    def visit(self, node: ast.AST):
 
         # Get the name of the node currently being visited
         name = self.get_nodename(node)
@@ -93,10 +85,15 @@ class CyclomaticComplexityVisitor(CodeMetricsVisitor):
         # For AST node, 'comprehension' nodes count the number of 'ifs' or test expressions + 1
         elif name == 'comprehension':
             self.cyclomatic_complexity += len(node.ifs) + 1
-        # For AST node, 'match' is counted as a decision point, this could contain orelse so this is counted, underscore cases are considered
+        # For AST node, 'match' is counted as a decision point, this could contain orelse so this is counted, underscore/wildcard cases are considered
         # as 'else' so are not counted
-        elif name == "match":
-            underscore_cases = sum(1 for case in node.cases if isinstance(case.__getattribute__('pattern'), ast.MatchAs) and case.pattern.name is None)
-            self.cyclomatic_complexity += (len(node.cases) - underscore_cases) if (len(node.cases) - underscore_cases) > 0 else 0
+        elif name == "Match":
+            wildcard_cases = sum(1 for case in node.cases if isinstance(case.__getattribute__('pattern'), ast.MatchAs) and case.pattern.name is None)
+            self.cyclomatic_complexity += (len(node.cases) - wildcard_cases) if (len(node.cases) - wildcard_cases) > 0 else 0
+
+        self.generic_visit(node)
+
+    def visit_Assert(self, node: ast.Assert):
+        self.cyclomatic_complexity += 1
 
         
