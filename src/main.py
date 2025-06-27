@@ -1,20 +1,18 @@
 import ast
 import astor
-
+from code_metrics.cyclomatic import CyclomaticComplexityVisitor
 
 def main():
-
-    class Visitor(ast.NodeVisitor):
-
-        def visit(self, node: ast.AST):
-            print(f"Visiting node: {node.__class__.__name__}")
-            self.generic_visit(node)
 
     with open('src/code_smells.py', 'r') as file:
         code = file.read()
     
     node = ast.parse(code)
-    print(astor.dump_tree(node))
+
+    visitor = CyclomaticComplexityVisitor()
+    visitor.visit(node)
+    for func in visitor.functions:
+        print(f"Function: {func.name}, Complexity: {func.complexity}, Location: {func.start_lineno}") 
 
 if __name__ == "__main__":
     main()

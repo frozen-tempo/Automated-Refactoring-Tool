@@ -1,7 +1,9 @@
 def simple_function(x):
-    x = 5
+    if x == 5:
+        other_simple_function(x)
 
-    assert x == 5, "x should be 5"
 
-    assert x == 6, "x should be 6"
+def other_simple_function(x):
+    print(x)
+
 
