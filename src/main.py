@@ -1,6 +1,8 @@
 import ast
+import pprint
 import astor
 from code_metrics.cyclomatic import CyclomaticComplexityVisitor
+from radon.visitors import ComplexityVisitor
 
 def main():
 
@@ -11,8 +13,15 @@ def main():
 
     visitor = CyclomaticComplexityVisitor()
     visitor.visit(node)
-    for func in visitor.functions:
-        print(f"Function: {func.name}, Complexity: {func.complexity}, Location: {func.start_lineno}") 
+
+    v2 = ComplexityVisitor.from_ast(node)
+
+    for func in v2.functions:
+        print(f"RadonFunction: {func.name}, Complexity: {func.complexity}")
+    for cls in v2.classes:
+        print(f"RadonClass: {cls.name}, Complexity: {cls.real_complexity}")
+
+    # pprint.pprint(astor.dump_tree(node))
 
 if __name__ == "__main__":
     main()

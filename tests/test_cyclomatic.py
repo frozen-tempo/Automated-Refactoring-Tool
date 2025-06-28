@@ -352,6 +352,6 @@ code_blocks = [
 
 @pytest.mark.parametrize("code,expected, kwargs", code_blocks)
 def test_code_blocks(code, expected,kwargs):
-    complexity = CyclomaticComplexityVisitor()
-    complexity.visit(ast.parse(dedent(code).strip()))
-    assert complexity.cyclomatic_complexity == expected
+    comp_visitor = CyclomaticComplexityVisitor()
+    comp_visitor.visit(ast.parse(dedent(code).strip()))
+    assert comp_visitor.cyclomatic_complexity == expected

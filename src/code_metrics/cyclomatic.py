@@ -19,30 +19,47 @@ class Function:
             return f"{self.belongs_to}.{self.name}"
         
     def __str__(self):
-        return f"Class: {self.name} \n Start Line: {self.start_lineno} \n End Line: {self.end_lineno} \n Belongs to: {self.belongs_to} \n Complexity: {self.complexity}"
-        
+        return f"Function: {self.name} \n Start Line: {self.start_lineno} \n End Line: {self.end_lineno} \n Belongs to: {self.belongs_to} \n Complexity: {self.complexity}"
+
+    def __repr__(self):
+        return f"Function: ({self.name} \n Start Line: {self.start_lineno} \n End Line: {self.end_lineno} \n Belongs to: {self.belongs_to} \n Complexity: {self.complexity} \n)"
+
+
 class Class:
 
-    def __init__(self, name, start_lineno, end_lineno, complexity):
+    def __init__(self, name, start_lineno, end_lineno, methods, complexity):
         self.name = name
         self.start_lineno = start_lineno
         self.end_lineno = end_lineno
-        self.methods = []
+        self.methods = methods
         self.complexity = complexity
 
+    def avg_method_complexity(self):
+        return sum(methd.complexity for methd in self.methods) / len(self.methods)
+
     def __str__(self):
-        return f"Class: {self.name} \n Start Line: {self.start_lineno} \n End Line: {self.end_lineno} \n Methods: {self.methods} \n Complexity: {self.complexity}"
+        return f"Class:{self.name} \n Start Line: {self.start_lineno} \n End Line: {self.end_lineno} \n Methods: {self.methods} \n Complexity: {self.complexity} \n Avg Complexity: {self.avg_method_complexity()}"
+    
+    def __repr__(self):
+        return f"Class:({self.name} \n Start Line: {self.start_lineno} \n End Line: {self.end_lineno} \n Methods: \n {self.methods} \n Complexity: {self.complexity} \n Avg Complexity: {self.avg_method_complexity()})"
     
 class CodeMetricsVisitor(ast.NodeVisitor):
 
     def get_nodename(self, node: ast.AST):
         return node.__class__.__name__
     
+    def get_name(self, node: ast.AST):
+        if hasattr(node, 'name'):
+            return node.name
+        elif hasattr(node, 'id'):
+            return node.id
+        return None
+    
 class CyclomaticComplexityVisitor(CodeMetricsVisitor):
 
-    def __init__(self, func_to_method=False, classname=None):
+    def __init__(self, starting_complexity = 1, func_to_method=False, classname=None):
 
-        self.cyclomatic_complexity = 1
+        self.cyclomatic_complexity = starting_complexity
         self.functions = []
         self.classes = []
         self.func_to_method = func_to_method
@@ -59,12 +76,12 @@ class CyclomaticComplexityVisitor(CodeMetricsVisitor):
     def function_complexity(self):
         if not self.functions:
             return 0
-        return sum(map(self.functions.get, 'complexity', self.functions)) - len(self.functions)
+        return sum(func.complexity for func in self.functions) - len(self.functions)
     
     def class_complexity(self):
         if not self.classes:
             return 0
-        return sum(map(self.classes.get, 'complexity', self.classes)) - len(self.classes)
+        return sum(cls.complexity for cls in self.classes) - len(self.classes)
     
     def total_complexity(self):
         return (
@@ -106,14 +123,14 @@ class CyclomaticComplexityVisitor(CodeMetricsVisitor):
         self.cyclomatic_complexity += 1
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
-        print("FunctionFound!")
 
         function_closures = []
         function_complexity = 1
 
         for child in node.body:
 
-            cyclomatic_visitor = CyclomaticComplexityVisitor()
+            # Careful not double count the +1 complexity for the function itself, set the starting complexity to 0
+            cyclomatic_visitor = CyclomaticComplexityVisitor(starting_complexity=0)
             cyclomatic_visitor.visit(child)
             function_closures.extend(cyclomatic_visitor.functions)
             function_complexity += cyclomatic_visitor.cyclomatic_complexity
@@ -128,9 +145,35 @@ class CyclomaticComplexityVisitor(CodeMetricsVisitor):
             function_complexity
         )
         self.functions.append(func)
+        for func in self.functions:
+            print(f"Function: {func.name}, Complexity: {func.complexity}")
     
 
     def visit_ClassDef(self, node: ast.ClassDef):
-        pass
-
         
+        class_name = self.get_name(node)
+        class_complexity = 0
+        methods = []
+
+        for child in node.body:
+            
+            cyclomatic_visitor = CyclomaticComplexityVisitor(
+                starting_complexity=0, 
+                func_to_method=True, 
+                classname=class_name
+            )
+            cyclomatic_visitor.visit(child)
+            methods.extend(cyclomatic_visitor.functions)
+            class_complexity += (cyclomatic_visitor.cyclomatic_complexity 
+                                + cyclomatic_visitor.function_complexity()
+                                + len(cyclomatic_visitor.functions))
+
+        cls = Class(
+                class_name,
+                node.lineno,
+                node.end_lineno if hasattr(node, 'end_lineno') else self.get_location(),
+                methods,
+                class_complexity
+        )
+
+        self.classes.append(cls) 
