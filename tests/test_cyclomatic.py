@@ -292,7 +292,7 @@ code_blocks = [
         '''
      assert i < 0
      ''',
-        1,
+        2,
         {},
     ),
     (
@@ -300,7 +300,16 @@ code_blocks = [
      def f():
         assert 10 > 20
      ''',
-        1,
+        2,
+        {},
+    ),
+    (
+        '''
+     def f():
+        assert 10 > 20
+        assert 10 < 20
+     ''',
+        3,
         {},
     ),
     (
@@ -309,7 +318,7 @@ code_blocks = [
         def test_yo(self):
             assert self.n > 4
      ''',
-        1,
+        2,
         {},
     ),
         (
@@ -354,4 +363,4 @@ code_blocks = [
 def test_code_blocks(code, expected,kwargs):
     comp_visitor = CyclomaticComplexityVisitor()
     comp_visitor.visit(ast.parse(dedent(code).strip()))
-    assert comp_visitor.cyclomatic_complexity == expected
+    assert comp_visitor.total_complexity() == expected

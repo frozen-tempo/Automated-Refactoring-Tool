@@ -1,48 +1,8 @@
 import ast
+from code_metrics.func import Function
+from code_metrics.cls import Class
 
-class Function:
-    
-    def __init__(self, name, start_lineno, end_lineno, is_method, belongs_to, closures, complexity):
-        self.name = name
-        self.start_lineno = start_lineno
-        self.end_lineno = end_lineno
-        self.is_method = is_method
-        self.belongs_to = belongs_to
-        self.closures = closures
-        self.complexity = complexity
-
-    def get_name(self):
-
-        if self.belongs_to is None:
-            return self.name
-        else:
-            return f"{self.belongs_to}.{self.name}"
-        
-    def __str__(self):
-        return f"Function: {self.name} \n Start Line: {self.start_lineno} \n End Line: {self.end_lineno} \n Belongs to: {self.belongs_to} \n Complexity: {self.complexity}"
-
-    def __repr__(self):
-        return f"Function: ({self.name} \n Start Line: {self.start_lineno} \n End Line: {self.end_lineno} \n Belongs to: {self.belongs_to} \n Complexity: {self.complexity} \n)"
-
-
-class Class:
-
-    def __init__(self, name, start_lineno, end_lineno, methods, complexity):
-        self.name = name
-        self.start_lineno = start_lineno
-        self.end_lineno = end_lineno
-        self.methods = methods
-        self.complexity = complexity
-
-    def avg_method_complexity(self):
-        return sum(methd.complexity for methd in self.methods) / len(self.methods)
-
-    def __str__(self):
-        return f"Class:{self.name} \n Start Line: {self.start_lineno} \n End Line: {self.end_lineno} \n Methods: {self.methods} \n Complexity: {self.complexity} \n Avg Complexity: {self.avg_method_complexity()}"
-    
-    def __repr__(self):
-        return f"Class:({self.name} \n Start Line: {self.start_lineno} \n End Line: {self.end_lineno} \n Methods: \n {self.methods} \n Complexity: {self.complexity} \n Avg Complexity: {self.avg_method_complexity()})"
-    
+ 
 class CodeMetricsVisitor(ast.NodeVisitor):
 
     def get_nodename(self, node: ast.AST):
@@ -87,8 +47,7 @@ class CyclomaticComplexityVisitor(CodeMetricsVisitor):
         return (
             self.cyclomatic_complexity 
             + self.function_complexity() 
-            + self.class_complexity() 
-            + 1
+            + self.class_complexity()
         )
 
     def generic_visit(self, node: ast.AST):
@@ -145,8 +104,6 @@ class CyclomaticComplexityVisitor(CodeMetricsVisitor):
             function_complexity
         )
         self.functions.append(func)
-        for func in self.functions:
-            print(f"Function: {func.name}, Complexity: {func.complexity}")
     
 
     def visit_ClassDef(self, node: ast.ClassDef):
