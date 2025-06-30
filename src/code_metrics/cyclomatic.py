@@ -1,9 +1,17 @@
 import ast
 from code_metrics.func import Function
 from code_metrics.cls import Class
+    
+class CyclomaticComplexityVisitor(ast.NodeVisitor):
 
- 
-class CodeMetricsVisitor(ast.NodeVisitor):
+    def __init__(self, starting_complexity = 1, func_to_method=False, classname=None):
+
+        self.cyclomatic_complexity = starting_complexity
+        self.functions = []
+        self.classes = []
+        self.func_to_method = func_to_method
+        self.classname = classname
+        self.location = 0
 
     def get_nodename(self, node: ast.AST):
         return node.__class__.__name__
@@ -14,17 +22,6 @@ class CodeMetricsVisitor(ast.NodeVisitor):
         elif hasattr(node, 'id'):
             return node.id
         return None
-    
-class CyclomaticComplexityVisitor(CodeMetricsVisitor):
-
-    def __init__(self, starting_complexity = 1, func_to_method=False, classname=None):
-
-        self.cyclomatic_complexity = starting_complexity
-        self.functions = []
-        self.classes = []
-        self.func_to_method = func_to_method
-        self.classname = classname
-        self.location = 0
     
     def get_location(self):
         return self.location
@@ -104,6 +101,9 @@ class CyclomaticComplexityVisitor(CodeMetricsVisitor):
             function_complexity
         )
         self.functions.append(func)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
+        return self.visit_FunctionDef(node)
     
 
     def visit_ClassDef(self, node: ast.ClassDef):

@@ -1,17 +1,11 @@
-def simple_function():
+x = 1
+y = 2
 
-    def other_simple_function(x):
-        print(x)
-    
-    return other_simple_function
-
-for i in range(10):
-    print(i)
-
-class SimpleClass:
-    def method(self):
-        return "Hello, World!"
-
-    def another_method(self, x):
-        if x > 10:
-            return x * 2
+z_1 = x + y + x
+z_2 = x * y
+z_3 = x - y
+z_4 = x / y
+z_5 = x ** y
+z_6 = x // y
+z_7 = x % y
+z_8 = x & y
