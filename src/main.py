@@ -1,7 +1,7 @@
 import ast
 import pprint
 import astor
-from code_metrics.cyclomatic import CyclomaticComplexityVisitor
+from code_metrics.halstead import HalsteadMetricsVisitor
 from radon.visitors import ComplexityVisitor
 
 def main():
@@ -11,9 +11,10 @@ def main():
     
     node = ast.parse(code)
 
-    v = CyclomaticComplexityVisitor()
+    v = HalsteadMetricsVisitor()
     v.visit(node)
-
+    print(v.unique_operators)
+    print(v.unique_operands)
     pprint.pprint(astor.dump_tree(node))
 
 if __name__ == "__main__":

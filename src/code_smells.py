@@ -9,3 +9,4 @@ z_5 = x ** y
 z_6 = x // y
 z_7 = x % y
 z_8 = x & y
+z_9 = not True
