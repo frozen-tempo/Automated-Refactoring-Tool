@@ -8,12 +8,6 @@ class Function:
         self.belongs_to = belongs_to
         self.closures = closures
         self.complexity = complexity
-        self.halstead_vocab = 0
-        self.halstead_length = 0
-        self.halstead_estimated_length = 0
-        self.halstead_volume = 0
-        self.halstead_difficulty = 0
-        self.halstead_effort = 0
 
     def get_name(self):
 

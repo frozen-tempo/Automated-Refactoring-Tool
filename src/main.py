@@ -13,8 +13,6 @@ def main():
 
     v = HalsteadMetricsVisitor()
     v.visit(node)
-    print(v.unique_operators)
-    print(v.unique_operands)
     pprint.pprint(astor.dump_tree(node))
 
 if __name__ == "__main__":
