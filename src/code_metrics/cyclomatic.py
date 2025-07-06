@@ -4,14 +4,14 @@ from code_metrics.cls import Class
     
 class CyclomaticComplexityVisitor(ast.NodeVisitor):
 
-    def __init__(self, starting_complexity = 1, func_to_method=False, classname=None):
-
+    def __init__(self, starting_complexity = 1, func_to_method=False, classname=None, location =0, source_code=""):
         self.cyclomatic_complexity = starting_complexity
         self.functions = []
         self.classes = []
         self.func_to_method = func_to_method
         self.classname = classname
-        self.location = 0
+        self.location = location
+        self.source_code = source_code
 
     def get_nodename(self, node: ast.AST):
         return node.__class__.__name__
@@ -82,6 +82,8 @@ class CyclomaticComplexityVisitor(ast.NodeVisitor):
 
         function_closures = []
         function_complexity = 1
+        num_localvar = 0
+        branches = 0
 
         for child in node.body:
 
@@ -90,15 +92,25 @@ class CyclomaticComplexityVisitor(ast.NodeVisitor):
             cyclomatic_visitor.visit(child)
             function_closures.extend(cyclomatic_visitor.functions)
             function_complexity += cyclomatic_visitor.cyclomatic_complexity
+            if isinstance(child, ast.Name):
+                num_localvar += 1
+            if isinstance(child, (ast.If, ast.For, ast.While, ast.Try, ast.Match)):
+                branches += 1
+
 
         func = Function(
             node.name,
+            ast.get_source_segment(self.source_code, node) if self.source_code else "",
             node.lineno,
             node.end_lineno if hasattr(node, 'end_lineno') else self.get_location(),
             self.func_to_method,
             self.classname if self.func_to_method else None,
             function_closures,
-            function_complexity
+            function_complexity,
+            len(node.body),
+            len(node.args.args),
+            num_localvar,
+            branches
         )
         self.functions.append(func)
 

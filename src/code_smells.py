@@ -1,20 +1,13 @@
-class cls:
-
-    def __init__(self) -> None:
-        self.x = 10
-
-cls_1 = cls()
-
-def func():
-    y = 1
-    z = y + return_x()
-    cls_1.x = 20
-    return z
-    
-def return_x():
-    x = 5
-    return x
-
-print(cls_1.x)
-func()
-print (cls_1.x)
+x = 1
+def func(x):
+    for i in range(x):
+        if x == 1:
+            return x
+        elif x == 2:
+            return x * 2
+        elif x == 3:
+            return x ** 2
+        elif x == 4:
+            return x / 2
+        else: 
+            return x + 1

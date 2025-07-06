@@ -1,36 +1,16 @@
 import ast
-
-class Function:
-
-    def __init__(self):
-        self.name = ""
-        self.MLoC = 0 # Lines of code within a function/method (excluding comments and empty lines)
-        self.complexity = 0 # Cyclomatic complexity for function/method
-        self.NoP = 0 
-        self.NoLV = 0
-        self.branches = 0
-        self.long_function = False
-    
-    def __str__(self):
-        return f"Function(name={self.name}, MLoC={self.MLoC}, complexity={self.complexity}, NoP={self.NoP}, NoLV={self.NoLV}, branches={self.branches}, long_function={self.long_function})"
-
-class LongFunctionDetector(ast.NodeVisitor):
+from textwrap import dedent
+from code_metrics.cyclomatic import CyclomaticComplexityVisitor
+class LongFunctionDetector:
 
     def __init__(self):
-        self.functions = []
+        self.long_functions = []
+        self.source_code = ""
 
-    def generic_visit(self, node: ast.AST):
-        pass
+    def check_long_function(self, functions):
 
-    def visit_FunctionDef(self, node: ast.FunctionDef):
-        func = Function()
-        func.name = node.name
-
-        for child in node.body:
-            if isinstance(child, ast.Name):
-                func.NoLV += 1
-            if isinstance(child, ast.If):
-                func.branches += 1
-            if isinstance(child, ast.Match):
-                func.branches += len(child.cases)
+        for func in functions:
+            if (func.mloc > 50) or (func.complexity > 5) or (((func.num_params > 5) or (func.num_localvar > 10)) and func.branches > 4):
+                func.long_function = True
+                self.long_functions.append(func)
             

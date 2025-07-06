@@ -1,8 +1,9 @@
 import ast
 import pprint
 import astor
-from code_metrics.halstead import HalsteadMetricsVisitor
-from radon.visitors import ComplexityVisitor
+from textwrap import dedent
+from detectors.detect_long_function import LongFunctionDetector
+from code_metrics.cyclomatic import CyclomaticComplexityVisitor
 
 def main():
 
@@ -11,9 +12,12 @@ def main():
     
     node = ast.parse(code)
 
-    v = HalsteadMetricsVisitor()
-    v.visit(node)
-    pprint.pprint(astor.dump_tree(node))
+    visitor = CyclomaticComplexityVisitor()
+    visitor.source_code = dedent(code).strip()
+    visitor.visit(node)
+    long_func_detector = LongFunctionDetector()
+    long_func_detector.check_long_function(visitor.functions)
+    print(long_func_detector.long_functions)
 
 if __name__ == "__main__":
     main()
