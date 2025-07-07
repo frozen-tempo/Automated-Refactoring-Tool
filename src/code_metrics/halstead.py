@@ -1,6 +1,4 @@
 import ast
-from code_metrics.func import Function
-from code_metrics.cls import Class
 import math
 
 class HalsteadMetricsVisitor(ast.NodeVisitor):
@@ -13,16 +11,16 @@ class HalsteadMetricsVisitor(ast.NodeVisitor):
         self.functions = []
 
     def halstead_vocab(self):
-        return self.unique_operands + self.unique_operators
+        return len(self.unique_operands) + len(self.unique_operators)
     
     def halstead_length(self):
         return self.operators + self.operands
     
     def halstead_estimated_length(self):
-        return self.unique_operators * math.log2(len(self.unique_operators)) + self.unique_operands * math.log2(len(self.unique_operands))
+        return len(self.unique_operators) * math.log2(len(self.unique_operators)) + len(self.unique_operands) * math.log2(len(self.unique_operands))
 
     def halstead_volume(self):
-        return self.halstead_length() * math.log2(len(self.halstead_vocab()))
+        return self.halstead_length() * math.log2(self.halstead_vocab())
     
     def halstead_difficulty(self):
         if len(self.unique_operators) == 0 or len(self.unique_operands) == 0:
@@ -36,7 +34,7 @@ class HalsteadMetricsVisitor(ast.NodeVisitor):
         return self.halstead_effort() / 18 #in seconds
     
     def delivered_bugs(self):
-        return (self.halstead_effort ** (2/3)) / 3000
+        return (self.halstead_effort() ** (2/3)) / 3000
 
     def generic_visit(self, node: ast.AST):
 
@@ -74,7 +72,8 @@ class HalsteadMetricsVisitor(ast.NodeVisitor):
         self.operator_helper(node.op)
         self.operands += len(node.values)
         for operand in node.values:
-            self.unique_operands.add(operand.id)
+            if isinstance(operand, ast.Name):
+                self.unique_operands.add(operand.id)
 
         self.generic_visit(node)
 
@@ -92,7 +91,10 @@ class HalsteadMetricsVisitor(ast.NodeVisitor):
         self.operator_helper(node.op)
 
         self.operands += 1
-        self.unique_operands.add(node.operand.value)
+        if isinstance(node.operand, ast.Constant):
+            self.unique_operands.add(node.operand.value)
+        if isinstance(node.operand, ast.Name):
+            self.unique_operands.add(node.operand.id)
 
         self.generic_visit(node)
 
@@ -172,7 +174,8 @@ class HalsteadMetricsVisitor(ast.NodeVisitor):
         self.operator_helper(node)
 
         self.operands += 1
-        self.unique_operands.add(node.value.id)
+        if isinstance(node.value, ast.Name):
+            self.unique_operands.add(node.value.id)
 
         if isinstance(node.slice, ast.Slice):
             if node.slice.lower is not None:

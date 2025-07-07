@@ -1,13 +1,53 @@
-x = 1
-def func(x):
-    for i in range(x):
-        if x == 1:
-            return x
-        elif x == 2:
-            return x * 2
-        elif x == 3:
-            return x ** 2
-        elif x == 4:
-            return x / 2
-        else: 
-            return x + 1
+def long_function():
+    val = 0
+    val = val + 1  # Line 1
+    val = val + 1  # Line 2
+    val = val + 1  # Line 3
+    val = val + 1  # Line 4
+    val = val + 1  # Line 5
+    val = val + 1  # Line 6
+    val = val + 1  # Line 7
+    val = val + 1  # Line 8
+    val = val + 1  # Line 9
+    val = val + 1  # Line 10
+    val = val * 2  # Line 11
+    val = val * 2  # Line 12
+    val = val - 5  # Line 13
+    val = val - 5  # Line 14
+    val = val / 2  # Line 15
+    val = val / 2  # Line 16
+    val = val + 10 # Line 17
+    val = val + 10 # Line 18
+    val = val * 3  # Line 19
+    val = val - 1  # Line 20
+    val = val - 1  # Line 21
+    val = val - 1  # Line 22
+    val = val - 1  # Line 23
+    val = val - 1  # Line 24
+    val = val - 1  # Line 25
+    val = val - 1  # Line 26
+    val = val - 1  # Line 27
+    val = val - 1  # Line 28
+    val = val - 1  # Line 29
+    val = val - 1  # Line 30
+    val = val - 1  # Line 31
+    val = val - 1  # Line 32
+    val = val - 1  # Line 33
+    val = val - 1  # Line 34
+    val = val - 1  # Line 35
+    val = val - 1  # Line 36
+    val = val - 1  # Line 37
+    val = val - 1  # Line 38
+    val = val - 1  # Line 39
+    val = val - 1  # Line 40
+    val = val - 1  # Line 41
+    val = val - 1  # Line 42
+    val = val - 1  # Line 43
+    val = val - 1  # Line 44
+    val = val - 1  # Line 45
+    val = val - 1  # Line 46
+    val = val - 1  # Line 47
+    val = val - 1  # Line 48
+    val = val - 1  # Line 49
+    val = val - 1  # Line 50
+    return val
