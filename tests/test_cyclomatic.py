@@ -335,7 +335,7 @@ code_blocks = [
          case 1: pass
          case _: pass
      ''',
-        2,
+        3,
         {},
     ),
     (
@@ -354,7 +354,7 @@ code_blocks = [
          case 2: pass
          case _: pass
      ''',
-        3,
+        4,
         {},
     ),
 ]

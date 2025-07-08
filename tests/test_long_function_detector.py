@@ -1,7 +1,6 @@
 import ast
 from src.code_metrics.cyclomatic import CyclomaticComplexityVisitor
 from src.detectors.detect_long_function import LongFunctionDetector
-from src.code_metrics.func import Function
 import pytest
 from textwrap import dedent
 
@@ -126,7 +125,7 @@ code_blocks = [
         }
     ]
     ),
-    # Function with > 4 params
+    # Function with > 4 params and > 5 branches
     ('''def too_many_params_function(x, y, z, a, b):
             if x == 1:
                 print(x)
@@ -152,6 +151,42 @@ code_blocks = [
         "mloc": 10,
         "num_params": 5,
         "num_localvar": 0,
+        "branches": 5,
+        "long_function": True
+        }
+    ]
+    ),
+    # Function with > 4 localvars and > 5 branches
+    ('''def too_many_localvars_function():
+            x = 1
+            y = 2
+            z = 3
+            a = 4
+            b = 5
+            if x == 1:
+                print(x)
+            if y == 2:
+                print(y)
+            if z == 3:
+                print(z)
+            if a == 4:
+                print(a)
+            if b == 5:
+                print(b)
+    '''
+    ,
+    [
+        {
+        "name": 'too_many_localvars_function',
+        "start_lineno": 1,
+        "end_lineno": 16,
+        "is_method": False,
+        "belongs_to": None,
+        "closures": [],
+        "complexity": 6,
+        "mloc": 15,
+        "num_params": 0,
+        "num_localvar": 5,
         "branches": 5,
         "long_function": True
         }

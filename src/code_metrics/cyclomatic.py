@@ -76,7 +76,7 @@ class CyclomaticComplexityVisitor(ast.NodeVisitor):
         elif isinstance(node, (ast.Match)):
             wildcard_cases = sum(1 for case in node.cases if isinstance(case.__getattribute__('pattern'), ast.MatchAs) and case.pattern is None)
             self.cyclomatic_complexity += (len(node.cases) - wildcard_cases) if (len(node.cases) - wildcard_cases) > 0 else 0
-
+            
         super().generic_visit(node)
 
     def visit_Assert(self, node: ast.Assert):

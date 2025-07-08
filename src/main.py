@@ -1,6 +1,4 @@
 import ast
-import pprint
-import astor
 from textwrap import dedent
 from detectors.detect_long_function import LongFunctionDetector
 from code_metrics.cyclomatic import CyclomaticComplexityVisitor
@@ -20,7 +18,7 @@ def main():
     long_func_detector.check_long_function(visitor.functions)
     print(long_func_detector.long_functions)
     print(visitor.functions)
-    #astpretty.pprint(node)
+    astpretty.pprint(node)
 
 if __name__ == "__main__":
     main()
