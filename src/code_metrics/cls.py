@@ -1,11 +1,12 @@
 class Class:
 
-    def __init__(self, name, start_lineno, end_lineno, methods, complexity):
+    def __init__(self, name, start_lineno, end_lineno, methods, complexity,mloc):
         self.name = name
         self.start_lineno = start_lineno
         self.end_lineno = end_lineno
         self.methods = methods
         self.complexity = complexity
+        self.mloc = mloc
 
     def avg_method_complexity(self):
         return sum(methd.complexity for methd in self.methods) / len(self.methods)

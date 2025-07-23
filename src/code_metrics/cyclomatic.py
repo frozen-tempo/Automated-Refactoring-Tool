@@ -1,6 +1,6 @@
 import ast
-from code_metrics.func import Function
-from code_metrics.cls import Class
+from func import Function
+from cls import Class
     
 class CyclomaticComplexityVisitor(ast.NodeVisitor):
 
@@ -42,12 +42,29 @@ class CyclomaticComplexityVisitor(ast.NodeVisitor):
             + self.function_complexity() 
             + self.class_complexity()
         )
+    
+    def get_total_loc(self):
+
+        module_loc = len(self.mloc)
+        function_loc = sum(func.mloc for func in self.functions)
+        class_loc = sum(cls.mloc for cls in self.classes)
+        method_loc = sum(method.mloc for cls in self.classes for method in cls.methods)
+
+        return module_loc + function_loc + class_loc + method_loc
 
     def generic_visit(self, node: ast.AST):
 
-        lineno = getattr(node, 'lineno', None)
-        if lineno is not None:
-            self.mloc.add(lineno)
+        if isinstance(node, (
+            ast.Return, ast.Delete, ast.Assign, ast.AugAssign, ast.AnnAssign,
+            ast.For, ast.AsyncFor, ast.While, ast.If, ast.With, ast.AsyncWith,
+            ast.Raise, ast.Try, ast.Assert, ast.Import, ast.ImportFrom,
+            ast.Global, ast.Nonlocal, ast.Expr, ast.Pass, ast.Break, ast.Continue,
+            ast.Match
+        )):
+            lineno = getattr(node, 'lineno', None)
+            if lineno is not None:
+                self.mloc.add(lineno)
+                print(f'Added {lineno} to running total in module')
 
         print(self.mloc)
         
@@ -61,6 +78,7 @@ class CyclomaticComplexityVisitor(ast.NodeVisitor):
             
             if isinstance(node.orelse, list) and len(node.orelse) >= 1 and hasattr(node.orelse[0], 'lineno') and not isinstance(node.orelse[0], ast.If):
                 self.mloc.add(node.orelse[0].lineno - 1)
+
         # Count each of the values for a 'BoolOp' node as a decision point, default path is not counted therefore - 1
         elif isinstance(node, (ast.BoolOp)):
             self.cyclomatic_complexity += len(node.values) - 1
@@ -102,21 +120,30 @@ class CyclomaticComplexityVisitor(ast.NodeVisitor):
             params.append(param.arg)
         num_localvar = set()
         branches = 0
-        mloc = 0
+        func_loc = set()
+
+        if hasattr(node, 'lineno'):
+            func_loc.add(node.lineno)
+
+        cyclomatic_visitor = CyclomaticComplexityVisitor(starting_complexity=0)
 
         for child in node.body:
 
             # Careful not double count the +1 complexity for the function itself, set the starting complexity to 0
-            cyclomatic_visitor = CyclomaticComplexityVisitor(starting_complexity=0)
             cyclomatic_visitor.visit(child)
             function_closures.extend(cyclomatic_visitor.functions)
             function_complexity += cyclomatic_visitor.cyclomatic_complexity
-            mloc += len(cyclomatic_visitor.mloc)
+
             branches += cyclomatic_visitor.branches
+
             # Check if variables found are not parameters of the function
             for localvar in cyclomatic_visitor.num_localvar:
                 if localvar not in params:
                     num_localvar.add(localvar)
+
+        func_loc.update(cyclomatic_visitor.mloc)
+        print(f'Function: {func_loc}')
+
 
         func = Function(
             node.name,
@@ -127,41 +154,120 @@ class CyclomaticComplexityVisitor(ast.NodeVisitor):
             self.classname if self.func_to_method else None,
             function_closures,
             function_complexity,
-            mloc,
+            len(func_loc),
             len(node.args.args),
             len(num_localvar),
             branches
         )
         self.functions.append(func)
 
-    '''def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
-        return self.visit_FunctionDef(node)'''
-    
-
     def visit_ClassDef(self, node: ast.ClassDef):
         
         class_name = node.name
         class_complexity = 0
         methods = []
+        cls_loc = set()
+
+        lineno = getattr(node, 'lineno', None)
+        if lineno is not None:
+            cls_loc.add(lineno)
+            print(f'Added {lineno} to running total in class')
 
         for child in node.body:
             
             cyclomatic_visitor = CyclomaticComplexityVisitor(
                 starting_complexity=0, 
-                func_to_method=True, 
+                func_to_method=True,
                 classname=class_name
             )
             cyclomatic_visitor.visit(child)
+
             methods.extend(cyclomatic_visitor.functions)
             class_complexity += (cyclomatic_visitor.cyclomatic_complexity 
                                 + cyclomatic_visitor.function_complexity()
                                 + len(cyclomatic_visitor.functions))
+            
+            if not isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                cls_loc.update(cyclomatic_visitor.mloc)
+            print(f'Class {class_name}: {cls_loc}')
+
 
         cls = Class(
                 class_name,
                 node.lineno,
                 node.end_lineno if hasattr(node, 'end_lineno') else self.get_location(),
                 methods,
-                class_complexity
+                class_complexity,
+                len(cls_loc)
         )
-        self.classes.append(cls) 
+        self.classes.append(cls)
+
+# Test function to debug the counting
+def test_lloc_counting():
+    source_code = '''class TestClass:
+    def __init__(self, name):
+        self.name = name
+
+    def method_one(self):
+        print(f"Method one in {self.name}")
+
+    def method_two(self):
+        print(f"Method two in {self.name}")
+
+    def method_three(self):
+        print(f"Method three in {self.name}")
+
+    x = 1
+    if x == 1:
+        print("x is 1")
+
+class TestClass2:
+    def __init__(self, name):
+        self.name = name
+
+    def method_one2(self):
+        print(f"Method one in {self.name}")
+        return 1
+
+    def method_two2(self):
+        print(f"Method two in {self.name}")
+
+    def method_three2(self):
+        print(f"Method three in {self.name}")
+
+    x = 1
+    if x == 1:
+        print("x is 1")
+
+def func():
+    return 1
+
+y = 1 
+z = y + 1'''
+
+    tree = ast.parse(source_code)
+    visitor = CyclomaticComplexityVisitor(source_code=source_code)
+    visitor.visit(tree)
+    
+    print("\n=== RESULTS ===")
+    print(f"Module LoC: {len(visitor.mloc)}")
+    
+    total_function_loc = sum(func.mloc for func in visitor.functions if not func.is_method)
+    total_method_loc = sum(method.mloc for cls in visitor.classes for method in cls.methods)
+    total_class_loc = sum(cls.mloc for cls in visitor.classes)
+    
+    print(f"Function LoC: {total_function_loc}")
+    print(f"Method LoC: {total_method_loc}")  
+    print(f"Class LoC: {total_class_loc}")
+    print(f"Total LoC: {visitor.get_total_loc()}")
+    
+    print("\nFunction details:")
+    for func in visitor.functions:
+        print(f"  {func.name}: {func.mloc} lines ({'method' if func.is_method else 'function'})")
+    
+    print("\nClass details:")
+    for cls in visitor.classes:
+        print(f"  {cls.name}: {cls.mloc} lines")
+
+if __name__ == "__main__":
+    test_lloc_counting()
