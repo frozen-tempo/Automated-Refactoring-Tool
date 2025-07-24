@@ -21,10 +21,8 @@ def main():
         for method in cls.methods:
             class_length += method.mloc
     
-    #print(visitor.functions)
-    #print(visitor.classes)
-    print(f"Total function MLOC: {function_length}")
-    print(f"Total class MLOC: {class_length}")
+    print(visitor.functions)
+    print(visitor.classes)
     print(visitor.get_total_loc())
     #long_func_detector = LongFunctionDetector()
     #long_func_detector.check_long_function(visitor.functions)

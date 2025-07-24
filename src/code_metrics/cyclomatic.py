@@ -1,6 +1,6 @@
 import ast
-from func import Function
-from cls import Class
+from code_metrics.func import Function
+from code_metrics.cls import Class
     
 class CyclomaticComplexityVisitor(ast.NodeVisitor):
 
@@ -48,9 +48,8 @@ class CyclomaticComplexityVisitor(ast.NodeVisitor):
         module_loc = len(self.mloc)
         function_loc = sum(func.mloc for func in self.functions)
         class_loc = sum(cls.mloc for cls in self.classes)
-        method_loc = sum(method.mloc for cls in self.classes for method in cls.methods)
 
-        return module_loc + function_loc + class_loc + method_loc
+        return module_loc + function_loc + class_loc
 
     def generic_visit(self, node: ast.AST):
 
@@ -64,9 +63,6 @@ class CyclomaticComplexityVisitor(ast.NodeVisitor):
             lineno = getattr(node, 'lineno', None)
             if lineno is not None:
                 self.mloc.add(lineno)
-                print(f'Added {lineno} to running total in module')
-
-        print(self.mloc)
         
         # For AST node, 'try' blocks are characterised with handlers (except) and orelse (else)
         if isinstance(node, (ast.Try)):
@@ -142,8 +138,6 @@ class CyclomaticComplexityVisitor(ast.NodeVisitor):
                     num_localvar.add(localvar)
 
         func_loc.update(cyclomatic_visitor.mloc)
-        print(f'Function: {func_loc}')
-
 
         func = Function(
             node.name,
@@ -171,7 +165,6 @@ class CyclomaticComplexityVisitor(ast.NodeVisitor):
         lineno = getattr(node, 'lineno', None)
         if lineno is not None:
             cls_loc.add(lineno)
-            print(f'Added {lineno} to running total in class')
 
         for child in node.body:
             
@@ -189,8 +182,10 @@ class CyclomaticComplexityVisitor(ast.NodeVisitor):
             
             if not isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 cls_loc.update(cyclomatic_visitor.mloc)
-            print(f'Class {class_name}: {cls_loc}')
+    
 
+        method_loc = sum(method.mloc for method in methods)
+        class_loc = len(cls_loc) + method_loc
 
         cls = Class(
                 class_name,
@@ -198,76 +193,8 @@ class CyclomaticComplexityVisitor(ast.NodeVisitor):
                 node.end_lineno if hasattr(node, 'end_lineno') else self.get_location(),
                 methods,
                 class_complexity,
-                len(cls_loc)
+                class_loc
+
         )
+        
         self.classes.append(cls)
-
-# Test function to debug the counting
-def test_lloc_counting():
-    source_code = '''class TestClass:
-    def __init__(self, name):
-        self.name = name
-
-    def method_one(self):
-        print(f"Method one in {self.name}")
-
-    def method_two(self):
-        print(f"Method two in {self.name}")
-
-    def method_three(self):
-        print(f"Method three in {self.name}")
-
-    x = 1
-    if x == 1:
-        print("x is 1")
-
-class TestClass2:
-    def __init__(self, name):
-        self.name = name
-
-    def method_one2(self):
-        print(f"Method one in {self.name}")
-        return 1
-
-    def method_two2(self):
-        print(f"Method two in {self.name}")
-
-    def method_three2(self):
-        print(f"Method three in {self.name}")
-
-    x = 1
-    if x == 1:
-        print("x is 1")
-
-def func():
-    return 1
-
-y = 1 
-z = y + 1'''
-
-    tree = ast.parse(source_code)
-    visitor = CyclomaticComplexityVisitor(source_code=source_code)
-    visitor.visit(tree)
-    
-    print("\n=== RESULTS ===")
-    print(f"Module LoC: {len(visitor.mloc)}")
-    
-    total_function_loc = sum(func.mloc for func in visitor.functions if not func.is_method)
-    total_method_loc = sum(method.mloc for cls in visitor.classes for method in cls.methods)
-    total_class_loc = sum(cls.mloc for cls in visitor.classes)
-    
-    print(f"Function LoC: {total_function_loc}")
-    print(f"Method LoC: {total_method_loc}")  
-    print(f"Class LoC: {total_class_loc}")
-    print(f"Total LoC: {visitor.get_total_loc()}")
-    
-    print("\nFunction details:")
-    for func in visitor.functions:
-        print(f"  {func.name}: {func.mloc} lines ({'method' if func.is_method else 'function'})")
-    
-    print("\nClass details:")
-    for cls in visitor.classes:
-        print(f"  {cls.name}: {cls.mloc} lines")
-
-if __name__ == "__main__":
-    test_lloc_counting()

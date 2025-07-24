@@ -12,8 +12,10 @@ class Class:
         return sum(methd.complexity for methd in self.methods) / len(self.methods)
 
     def __str__(self):
-        return f"Class:{self.name} \n Start Line: {self.start_lineno} \n End Line: {self.end_lineno} \n Methods: {self.methods} \n Complexity: {self.complexity} \n Avg Complexity: {self.avg_method_complexity()}"
+        return f"Class:{self.name} \n Start Line: {self.start_lineno} \n End Line: {self.end_lineno} \n Class Body Length: {self.mloc} \n Methods: {self.methods} \n Complexity: {self.complexity} \n Avg Complexity: {self.avg_method_complexity()}"
     
     def __repr__(self):
-        return f"Class:({self.name} \n Start Line: {self.start_lineno} \n End Line: {self.end_lineno} \n Methods: \n {self.methods} \n Complexity: {self.complexity} \n Avg Complexity: {self.avg_method_complexity()})"
+        return f"Class:({self.name} \n Start Line: {self.start_lineno} \n End Line: {self.end_lineno} \n Class Body Length: {self.mloc} \n Methods: \n {self.methods} \n Complexity: {self.complexity} \n Avg Complexity: {self.avg_method_complexity()})"
    
+    def get_method_loc(self):
+        return sum(method.mloc for method in self.methods)
